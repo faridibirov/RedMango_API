@@ -27,20 +27,23 @@ public class ShoppingCartController : ControllerBase
     {
         try
         {
-            if(string.IsNullOrEmpty(userId))
+            ShoppingCart shoppingCart;
+
+            if (string.IsNullOrEmpty(userId))
             {
-                _response.IsSuccess = false;
-                _response.StatusCode = HttpStatusCode.BadRequest;
-                return BadRequest(_response);
+                shoppingCart = new();
             }
 
-            var shoppingCart = _db.ShoppingCarts.Include(sc=>sc.CartItems).ThenInclude(sc=>sc.MenuItem)
-                .FirstOrDefault(sc => sc.UserId == userId);
+            else
+            {
+                shoppingCart = _db.ShoppingCarts.Include(sc => sc.CartItems).ThenInclude(sc => sc.MenuItem)
+                   .FirstOrDefault(sc => sc.UserId == userId);
+            }
 
-            if(shoppingCart.CartItems!=null && shoppingCart.CartItems.Count>0)
+            if (shoppingCart.CartItems != null && shoppingCart.CartItems.Count > 0)
             {
 
-                shoppingCart.CartTotal = shoppingCart.CartItems.Sum(u =>u.Quantity*u.MenuItem.Price);
+                shoppingCart.CartTotal = shoppingCart.CartItems.Sum(u => u.Quantity * u.MenuItem.Price);
             }
 
             _response.Result = shoppingCart;
@@ -58,12 +61,12 @@ public class ShoppingCartController : ControllerBase
     }
 
     [HttpPost]
-    public async Task<ActionResult<ApiResponse>> AddOrUpdateItemInCart(string userId,int menuItemId, int updateQunatityBy  )
+    public async Task<ActionResult<ApiResponse>> AddOrUpdateItemInCart(string userId, int menuItemId, int updateQunatityBy)
     {
-        ShoppingCart shoppingCart = _db.ShoppingCarts.Include(u=>u.CartItems).FirstOrDefault(u => u.UserId == userId);
+        ShoppingCart shoppingCart = _db.ShoppingCarts.Include(u => u.CartItems).FirstOrDefault(u => u.UserId == userId);
         MenuItem menuItem = _db.MenuItems.FirstOrDefault(u => u.Id == menuItemId);
 
-        if(menuItem==null)
+        if (menuItem == null)
         {
             _response.StatusCode = HttpStatusCode.BadRequest;
             _response.IsSuccess = false;
@@ -96,7 +99,7 @@ public class ShoppingCartController : ControllerBase
 
             CartItem cartItemInCart = shoppingCart.CartItems.FirstOrDefault(u => u.MenuItemId == menuItemId);
 
-            if(cartItemInCart == null)
+            if (cartItemInCart == null)
             {
                 // item does not exist in current cart
                 CartItem newCartItem = new()
@@ -115,11 +118,11 @@ public class ShoppingCartController : ControllerBase
 
                 int newQuantity = cartItemInCart.Quantity + updateQunatityBy;
 
-                if(updateQunatityBy==0 || newQuantity<=0)
+                if (updateQunatityBy == 0 || newQuantity <= 0)
                 {
                     //remove cart item from cart and if it is the only item then remove cart
                     _db.CartItems.Remove(cartItemInCart);
-                    if(shoppingCart.CartItems.Count()==1)
+                    if (shoppingCart.CartItems.Count() == 1)
                     {
                         _db.ShoppingCarts.Remove(shoppingCart);
                     }
