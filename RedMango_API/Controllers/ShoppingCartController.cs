@@ -61,7 +61,7 @@ public class ShoppingCartController : ControllerBase
     }
 
     [HttpPost]
-    public async Task<ActionResult<ApiResponse>> AddOrUpdateItemInCart(string userId, int menuItemId, int updateQunatityBy)
+    public async Task<ActionResult<ApiResponse>> AddOrUpdateItemInCart(string userId, int menuItemId, int updateQuantityBy)
     {
         ShoppingCart shoppingCart = _db.ShoppingCarts.Include(u => u.CartItems).FirstOrDefault(u => u.UserId == userId);
         MenuItem menuItem = _db.MenuItems.FirstOrDefault(u => u.Id == menuItemId);
@@ -73,7 +73,7 @@ public class ShoppingCartController : ControllerBase
             return BadRequest(_response);
         }
 
-        if (shoppingCart == null && updateQunatityBy > 0)
+        if (shoppingCart == null && updateQuantityBy > 0)
         {
             //create a shopping cart & add cart item
 
@@ -84,7 +84,7 @@ public class ShoppingCartController : ControllerBase
             CartItem newCartItem = new()
             {
                 MenuItemId = menuItemId,
-                Quantity = updateQunatityBy,
+                Quantity = updateQuantityBy,
                 ShoppingCartId = newCart.Id,
                 MenuItem = null
             };
@@ -105,7 +105,7 @@ public class ShoppingCartController : ControllerBase
                 CartItem newCartItem = new()
                 {
                     MenuItemId = menuItemId,
-                    Quantity = updateQunatityBy,
+                    Quantity = updateQuantityBy,
                     ShoppingCartId = shoppingCart.Id,
                     MenuItem = null
                 };
@@ -116,9 +116,9 @@ public class ShoppingCartController : ControllerBase
             {
                 //item already exist in the cart and we have to update quantity
 
-                int newQuantity = cartItemInCart.Quantity + updateQunatityBy;
+                int newQuantity = cartItemInCart.Quantity + updateQuantityBy;
 
-                if (updateQunatityBy == 0 || newQuantity <= 0)
+                if (updateQuantityBy == 0 || newQuantity <= 0)
                 {
                     //remove cart item from cart and if it is the only item then remove cart
                     _db.CartItems.Remove(cartItemInCart);
