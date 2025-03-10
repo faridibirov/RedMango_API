@@ -12,7 +12,6 @@ public class MenuItemUpdateDTO
     public string Category { get; set; }
     [Range(1, int.MaxValue)]
     public double Price { get; set; }
-    [Required]
     public IFormFile File { get; set; }
 
 }
