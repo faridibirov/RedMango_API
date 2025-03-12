@@ -8,6 +8,7 @@ using RedMango_API.Models.Dto;
 using RedMango_API.Services;
 using RedMango_API.Utility;
 using System.Net;
+using System.Text.Json;
 
 namespace RedMango_API.Controllers;
 
@@ -26,23 +27,41 @@ public class OrderController : ControllerBase
 
     [HttpGet]
     [Authorize]
-    public async Task<ActionResult<ApiResponse>> GetOrders(string? userId)
+    public async Task<ActionResult<ApiResponse>> GetOrders(string? userId, string searchString, string status, int pageNumber=1, int pageSize=5)
     {
         try
         {
-            var orderHeaders = _db.OrderHeaders.Include(u => u.OrderDetails)
+            IEnumerable<OrderHeader> orderHeaders = _db.OrderHeaders.Include(u => u.OrderDetails)
                 .ThenInclude(u => u.MenuItem).OrderByDescending(u => u.OrderHeaderId);
 
             if (!string.IsNullOrEmpty(userId))
             {
-                _response.Result = orderHeaders.Where(u => u.ApplicationUserId == userId);
+                orderHeaders = orderHeaders.Where(u => u.ApplicationUserId == userId);
             }
 
-            else
+
+            if(!string.IsNullOrEmpty(searchString))
             {
-                _response.Result = orderHeaders;
+                orderHeaders = orderHeaders.Where(u=>u.PickupPhoneNumber.ToLower().Contains(searchString) ||
+                u.PickupEmail.ToLower().Contains(searchString) ||u.PickupName.ToLower().Contains(searchString));
             }
-            _response.StatusCode = System.Net.HttpStatusCode.OK;
+
+            if (!string.IsNullOrEmpty(status))
+            {
+                orderHeaders = orderHeaders.Where(u => u.Status.ToLower() == status.ToLower());
+            }
+
+            Pagination pagination = new()
+            {
+                CurrentPage = pageNumber,
+                PageSize = pageSize,
+                TotalRecords = orderHeaders.Count()
+            };
+
+            Response.Headers.Add("X-Pagination", JsonSerializer.Serialize(pagination));
+
+            _response.Result = orderHeaders.Skip((pageNumber-1)*pageSize).Take(pageSize);
+            _response.StatusCode = HttpStatusCode.OK;
             return Ok(_response);
 
         }
